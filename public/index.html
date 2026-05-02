@@ -1,0 +1,180 @@
+﻿<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM Realtime Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand-wrap">
+        <img
+          class="brand-logo"
+          src="https://w.ladicdn.com/68b11041589e01001237939d/landing-page-banner-3-169-20240520090446-0nyo8-20260501161854-z5loj.png"
+          alt="VNUIS Logo"
+        />
+        <div>
+          <h1>Data Platform</h1>
+          <p class="brand-subtitle">VNUIS Admissions Intelligence Dashboard</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <p id="updatedAt">Đang tải dữ liệu...</p>
+        <button id="refreshBtn">Làm mới</button>
+      </div>
+    </header>
+
+    <section class="program-switch">
+      <button class="program-btn active" data-program="undergrad">Tuyển sinh Đại học</button>
+      <button class="program-btn" data-program="postgrad">Tuyển sinh Sau đại học</button>
+      <button class="program-btn" data-program="media">Truyền thông</button>
+    </section>
+
+    <section id="undergradView">
+      <section class="kpi-grid">
+        <article class="kpi"><h3>Tổng Leads</h3><p id="kpiTotal">0</p></article>
+        <article class="kpi"><h3>Leads Hôm Nay</h3><p id="kpiToday">0</p></article>
+        <article class="kpi"><h3>Leads Hôm Qua</h3><p id="kpiYesterday">0</p></article>
+        <article class="kpi"><h3>Leads Tuần Này</h3><p id="kpiWeek">0</p></article>
+        <article class="kpi"><h3>Leads Tháng Này</h3><p id="kpiMonth">0</p></article>
+        <article class="kpi"><h3>Chênh lệch Hôm nay/Hôm qua</h3><p id="kpiDelta">0</p></article>
+      </section>
+
+      <section class="chart-grid">
+        <article class="card">
+          <h2>Leads theo ngày</h2>
+          <canvas id="dailyChart"></canvas>
+        </article>
+        <article class="card">
+          <h2>Leads theo tuần</h2>
+          <canvas id="weeklyChart"></canvas>
+        </article>
+      </section>
+
+      <section class="insight-grid">
+        <article class="card">
+          <h2>Leads mới hôm nay tập trung về đâu</h2>
+          <div class="today-focus-grid">
+            <div>
+              <h3>Theo CB chăm sóc</h3>
+              <div id="todayOwnerTable"></div>
+            </div>
+            <div>
+              <h3>Theo ngành học</h3>
+              <div id="todayMajorTable"></div>
+            </div>
+            <div>
+              <h3>Theo tình trạng liên hệ</h3>
+              <div id="todayStatusTable"></div>
+            </div>
+          </div>
+        </article>
+        <article class="card"><h2>Nguồn lead của CRM</h2><div id="crmSourceTable"></div></article>
+      </section>
+
+      <section class="performance-section">
+        <article class="card"><h2>Performance CB chăm sóc</h2><div id="ownerPerfTable"></div></article>
+      </section>
+
+      <section class="table-grid">
+        <article class="card"><h2>Theo tình trạng liên hệ</h2><div id="statusTable"></div></article>
+        <article class="card"><h2>Theo CB chăm sóc</h2><div id="ownerTable"></div></article>
+        <article class="card"><h2>Theo ngành học quan tâm</h2><div id="majorTable"></div></article>
+        <article class="card"><h2>Phương thức xét tuyển</h2><div id="methodTable"></div></article>
+      </section>
+
+      <section class="loan-section">
+        <article class="card loan-card">
+          <h2>Loan Nguyễn - Tuyển sinh quốc tế</h2>
+          <p id="loanIntlSummary">Đang tải...</p>
+          <div class="loan-grid">
+            <div class="loan-pane">
+              <h3>Ngành đang care</h3>
+              <div id="loanIntlMajorTable"></div>
+            </div>
+            <div class="loan-pane">
+              <h3>Tình trạng liên hệ</h3>
+              <div id="loanIntlStatusTable"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section id="postgradView" class="hidden">
+      <section class="kpi-grid">
+        <article class="kpi"><h3>Tổng leads</h3><p id="pgTotal">0</p></article>
+        <article class="kpi"><h3>Có SĐT</h3><p id="pgPhone">0</p></article>
+        <article class="kpi"><h3>Có email</h3><p id="pgEmail">0</p></article>
+        <article class="kpi"><h3>Hôm nay</h3><p id="pgToday">0</p></article>
+      </section>
+
+      <section class="chart-grid">
+        <article class="card">
+          <h2>Leads theo ngày</h2>
+          <canvas id="postgradDailyChart"></canvas>
+        </article>
+        <article class="card">
+          <h2>Leads mới trong ngày</h2>
+          <h3>Theo ngành quan tâm</h3>
+          <div id="pgTodayMajorTable"></div>
+        </article>
+      </section>
+
+      <section class="table-grid postgrad-grid">
+        <article class="card"><h2>Top ngành quan tâm</h2><div id="pgMasterMajorTable"></div></article>
+        <article class="card"><h2>Ngành tốt nghiệp ĐH</h2><div id="pgBachelorMajorTable"></div></article>
+        <article class="card"><h2>Chứng chỉ</h2><div id="pgCertificateTable"></div></article>
+      </section>
+    </section>
+
+    <section id="mediaView" class="hidden">
+      <section class="insight-grid">
+        <article class="card">
+          <h2>Chẩn đoán dữ liệu Truyền thông</h2>
+          <div id="mdNoticeTable"></div>
+        </article>
+      </section>
+
+      <section class="kpi-grid">
+        <article class="kpi"><h3>Fanpage</h3><p id="mdPageName">-</p></article>
+        <article class="kpi"><h3>Fans</h3><p id="mdFans">0</p></article>
+        <article class="kpi"><h3>Followers</h3><p id="mdFollowers">0</p></article>
+        <article class="kpi"><h3>Tài khoản quảng cáo</h3><p id="mdAdAccounts">0</p></article>
+        <article class="kpi"><h3>Reach 30 ngày</h3><p id="mdImpressions">0</p></article>
+        <article class="kpi"><h3>Engaged Users 30 ngày</h3><p id="mdEngaged">0</p></article>
+        <article class="kpi"><h3>Tổng tương tác bài viết</h3><p id="mdPostEngagement">0</p></article>
+        <article class="kpi"><h3>ER TB bài viết (%)</h3><p id="mdAvgEr">0</p></article>
+      </section>
+
+      <section class="chart-grid">
+        <article class="card">
+          <h2>Hiệu suất fanpage theo ngày</h2>
+          <canvas id="mediaDailyChart"></canvas>
+        </article>
+        <article class="card">
+          <h2>Tài khoản quảng cáo đang chạy</h2>
+          <div id="mdAdAccountTable"></div>
+        </article>
+      </section>
+
+      <section class="table-grid">
+        <article class="card">
+          <h2>Thông tin token & quyền truy cập</h2>
+          <div id="mdTokenInfoTable"></div>
+        </article>
+        <article class="card">
+          <h2>Bài viết tương tác cao nhất trong tháng</h2>
+          <div id="mdTopPostsTable"></div>
+        </article>
+      </section>
+    </section>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
