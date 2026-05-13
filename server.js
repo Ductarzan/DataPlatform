@@ -194,6 +194,7 @@ function normalizeMajor(rawMajor) {
     "management",
     "accounting analyzing and auditing",
     "marketing dual degree",
+    "management dual degree",
     "business data analytics",
   ]);
 
@@ -205,6 +206,7 @@ function normalizeMajor(rawMajor) {
     normalizedKey.includes("management information system") ||
     normalizedKey.includes("accounting analyzing and auditing") ||
     normalizedKey.includes("marketing dual degree") ||
+    normalizedKey.includes("management dual degree") ||
     normalizedKey.includes("business data analytics")
   ) {
     return "Tuyển sinh quốc tế";
@@ -956,7 +958,11 @@ function aggregate(rows, days = 30) {
     breakdown: {
       byStatus: topEntries(byStatus),
       byOwner: topEntries(byOwner),
-      byMajor: topEntries(byMajor).filter((item) => foldText(item.name) !== foldText("Tuyển sinh quốc tế")),
+      byMajor: topEntries(byMajor).filter(
+        (item) =>
+          foldText(item.name) !== foldText("Tuyển sinh quốc tế") &&
+          foldText(item.name) !== foldText("Khac")
+      ),
       byAdmissionMethodExcludingLoan: topEntries(byAdmissionMethodExcludingLoan),
       loanNguyenInternational: {
         totalLeads: loanIntlTotal,
