@@ -139,15 +139,30 @@ function normalizeMajor(rawMajor) {
   const key = foldText(base);
   if (!key) return "Khac";
 
+  const normalizedKey = key.replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
   const internationalMajorKeys = new Set([
     "international business",
     "english language",
     "informatics and computer engineering",
     "management information system",
     "management",
+    "accounting analyzing and auditing",
+    "marketing dual degree",
+    "business data analytics",
   ]);
 
-  if (internationalMajorKeys.has(key)) return "Tuyển sinh quốc tế";
+  if (
+    internationalMajorKeys.has(normalizedKey) ||
+    normalizedKey.includes("international business") ||
+    normalizedKey.includes("english language") ||
+    normalizedKey.includes("informatics and computer engineering") ||
+    normalizedKey.includes("management information system") ||
+    normalizedKey.includes("accounting analyzing and auditing") ||
+    normalizedKey.includes("marketing dual degree") ||
+    normalizedKey.includes("business data analytics")
+  ) {
+    return "Tuyển sinh quốc tế";
+  }
   return base;
 }
 
@@ -852,7 +867,7 @@ function aggregate(rows, days = 30) {
     if (foldText(owner) === "loan nguyen" && foldText(major) === foldText("Tuyển sinh quốc tế")) {
       loanIntlTotal += 1;
       byStatusLoanIntl.set(status, (byStatusLoanIntl.get(status) || 0) + 1);
-      const loanMajor = rawMajor || "Khac";
+      const loanMajor = major;
       byLoanIntlMajor.set(loanMajor, (byLoanIntlMajor.get(loanMajor) || 0) + 1);
     }
 
