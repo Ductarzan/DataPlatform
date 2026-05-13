@@ -19,20 +19,20 @@ const DASHBOARD_CONFIGS = {
     sheetRange: process.env.GOOGLE_SHEET_RANGE || "A4:O",
   },
   postgrad: {
-    sheetId: process.env.POSTGRAD_GOOGLE_SHEET_ID || "1kxzjNRgWAm5rIgMG94LcYRXciDsJ5oG0GkCp927u4Hk",
+    sheetId: process.env.POSTGRAD_GOOGLE_SHEET_ID,
     sheetName: process.env.POSTGRAD_GOOGLE_SHEET_NAME || "CRM VN",
     sheetRange: process.env.POSTGRAD_GOOGLE_SHEET_RANGE || "A8:H",
   },
 };
 
 const FACEBOOK_CONFIG = {
-  pageId: process.env.FB_PAGE_ID || "140994872596251",
-  appId: process.env.FB_APP_ID || "1458660842057290",
-  appName: process.env.FB_APP_NAME || "Threads",
-  userId: process.env.FB_USER_ID || "1227181449399584",
-  userName: process.env.FB_USER_NAME || "Phạm Minh Đức",
-  tokenExpiresAt: Number(process.env.FB_TOKEN_EXPIRES_AT || 1777658400),
-  dataAccessExpiresAt: Number(process.env.FB_DATA_ACCESS_EXPIRES_AT || 1785428615),
+  pageId: process.env.FB_PAGE_ID || "",
+  appId: process.env.FB_APP_ID || "",
+  appName: process.env.FB_APP_NAME || "",
+  userId: process.env.FB_USER_ID || "",
+  userName: process.env.FB_USER_NAME || "",
+  tokenExpiresAt: Number(process.env.FB_TOKEN_EXPIRES_AT || 0),
+  dataAccessExpiresAt: Number(process.env.FB_DATA_ACCESS_EXPIRES_AT || 0),
 };
 
 app.use(express.static(path.join(__dirname, "public")));
