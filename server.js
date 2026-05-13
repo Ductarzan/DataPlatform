@@ -182,6 +182,8 @@ function normalizeMajor(rawMajor) {
   const base = (rawMajor || "").trim();
   const key = foldText(base);
   if (!key) return "Khac";
+  // Treat punctuation-only or obvious garbage values as unknown major.
+  if (!/[a-z0-9]/.test(key)) return "Khac";
 
   const normalizedKey = key.replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
   const internationalMajorKeys = new Set([
