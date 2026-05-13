@@ -8,6 +8,7 @@ dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const APP_TIMEZONE = process.env.APP_TIMEZONE || "Asia/Bangkok";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -109,6 +110,49 @@ function getIsoWeek(date) {
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+const zonedDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: APP_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function getZonedDateKey(value) {
+  const d = value instanceof Date ? value : new Date(value);
+  const parts = zonedDateFormatter.formatToParts(d);
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  if (!year || !month || !day) return null;
+  return `${year}-${month}-${day}`;
+}
+
+function dateFromKeyUtc(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+function addDaysToKey(key, offsetDays) {
+  const d = dateFromKeyUtc(key);
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+function getIsoWeekFromKey(key) {
+  const d = dateFromKeyUtc(key);
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function getIsoWeekStartKey(key) {
+  const d = dateFromKeyUtc(key);
+  const dayOfWeek = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() - dayOfWeek + 1);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 function foldText(value) {
@@ -696,7 +740,7 @@ function pickField(row, keys, fallback = "") {
 
 function aggregatePostgrad(rows, sourceBreakdown, days = 30) {
   const now = new Date();
-  const today = startOfDay(now);
+  const todayKey = getZonedDateKey(now);
   const byDate = new Map();
   const byMasterMajor = new Map();
   const byBachelorMajor = new Map();
@@ -727,15 +771,15 @@ function aggregatePostgrad(rows, sourceBreakdown, days = 30) {
     byCertificate.set(cert, (byCertificate.get(cert) || 0) + 1);
 
     if (created) {
-      const day = startOfDay(created);
-      const key = formatDateKey(day);
+      const key = getZonedDateKey(created);
+      if (!key) continue;
       byDate.set(key, (byDate.get(key) || 0) + 1);
-      if (day.getTime() === today.getTime()) {
+      if (key === todayKey) {
         todayLeads += 1;
         todayByMasterMajor.set(master, (todayByMasterMajor.get(master) || 0) + 1);
       }
       const firstSeen = firstSeenByMasterMajor.get(master);
-      if (!firstSeen || day < firstSeen) firstSeenByMasterMajor.set(master, day);
+      if (!firstSeen || key < firstSeen) firstSeenByMasterMajor.set(master, key);
       if (!latestDate || created > latestDate) latestDate = created;
     }
 
@@ -753,9 +797,7 @@ function aggregatePostgrad(rows, sourceBreakdown, days = 30) {
 
   const dailySeries = [];
   for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = formatDateKey(d);
+    const key = addDaysToKey(todayKey, -i);
     dailySeries.push({ date: key, leads: byDate.get(key) || 0 });
   }
 
@@ -765,11 +807,10 @@ function aggregatePostgrad(rows, sourceBreakdown, days = 30) {
       .sort((a, b) => b.leads - a.leads)
       .slice(0, limit);
 
-  const todayKey = formatDateKey(today);
   const newMajorsToday = Array.from(todayByMasterMajor.entries())
     .filter(([major]) => {
       const firstSeen = firstSeenByMasterMajor.get(major);
-      return firstSeen && formatDateKey(firstSeen) === todayKey;
+      return firstSeen && firstSeen === todayKey;
     })
     .map(([name, leads]) => ({ name, leads }))
     .sort((a, b) => b.leads - a.leads);
@@ -800,15 +841,10 @@ function aggregatePostgrad(rows, sourceBreakdown, days = 30) {
 
 function aggregate(rows, days = 30) {
   const now = new Date();
-  const today = startOfDay(now);
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const weekStart = new Date(today);
-  const dayOfWeek = weekStart.getDay() === 0 ? 7 : weekStart.getDay();
-  weekStart.setDate(weekStart.getDate() - dayOfWeek + 1);
-
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const todayKey = getZonedDateKey(now);
+  const yesterdayKey = addDaysToKey(todayKey, -1);
+  const weekStartKey = getIsoWeekStartKey(todayKey);
+  const monthPrefix = todayKey.slice(0, 7);
 
   const byDate = new Map();
   const byWeek = new Map();
@@ -839,9 +875,9 @@ function aggregate(rows, days = 30) {
     }
 
     totalWithValidDate += 1;
-    const day = startOfDay(created);
-    const dateKey = formatDateKey(day);
-    const weekKey = getIsoWeek(day);
+    const dateKey = getZonedDateKey(created);
+    if (!dateKey) continue;
+    const weekKey = getIsoWeekFromKey(dateKey);
 
     byDate.set(dateKey, (byDate.get(dateKey) || 0) + 1);
     byWeek.set(weekKey, (byWeek.get(weekKey) || 0) + 1);
@@ -871,22 +907,20 @@ function aggregate(rows, days = 30) {
       byLoanIntlMajor.set(loanMajor, (byLoanIntlMajor.get(loanMajor) || 0) + 1);
     }
 
-    if (day.getTime() === today.getTime()) todayCount += 1;
-    if (day.getTime() === today.getTime()) {
+    if (dateKey === todayKey) todayCount += 1;
+    if (dateKey === todayKey) {
       todayByOwner.set(owner, (todayByOwner.get(owner) || 0) + 1);
       todayByMajor.set(major, (todayByMajor.get(major) || 0) + 1);
       todayByStatus.set(status, (todayByStatus.get(status) || 0) + 1);
     }
-    if (day.getTime() === yesterday.getTime()) yesterdayCount += 1;
-    if (day >= weekStart) weekCount += 1;
-    if (day >= monthStart) monthCount += 1;
+    if (dateKey === yesterdayKey) yesterdayCount += 1;
+    if (dateKey >= weekStartKey) weekCount += 1;
+    if (dateKey.startsWith(monthPrefix)) monthCount += 1;
   }
 
   const dailySeries = [];
   for (let i = days - 1; i >= 0; i -= 1) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = formatDateKey(d);
+    const key = addDaysToKey(todayKey, -i);
     dailySeries.push({ date: key, leads: byDate.get(key) || 0 });
   }
 
