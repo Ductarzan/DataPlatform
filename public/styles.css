@@ -47,6 +47,7 @@ header h1 {
   align-items: center;
   gap: 10px;
   margin-top: 4px;
+  min-width: 0;
 }
 #updatedAt {
   margin: 0;
@@ -55,6 +56,9 @@ header h1 {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
   padding: 8px 12px;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .program-switch {
   padding: 10px 16px 16px;
@@ -257,6 +261,49 @@ tr:nth-child(even) td {
   height: 10px;
   border-radius: 2px;
   display: inline-block;
+}
+
+@media (max-width: 768px) {
+  header {
+    padding: 12px;
+    gap: 10px;
+  }
+  .brand-wrap {
+    width: 100%;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  }
+  .brand-logo {
+    width: min(40vw, 140px);
+    height: auto;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-size: clamp(30px, 9vw, 42px);
+    line-height: 1.05;
+  }
+  .brand-subtitle {
+    font-size: 13px;
+  }
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  #updatedAt {
+    flex: 1 1 100%;
+    border-radius: 12px;
+  }
+  #refreshBtn {
+    width: 100%;
+  }
+  .program-switch {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px 14px;
+  }
 }
 
 .today-focus-grid {
